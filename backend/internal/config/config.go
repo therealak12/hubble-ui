@@ -35,7 +35,11 @@ type Config struct {
 	TLSRelayClientKeyFile   string
 
 	relayClientConfig certloader.ClientConfigBuilder
+
+	DexConfig Dex
 }
+
+
 
 func (cfg *Config) UIServerListenAddr() string {
 	return fmt.Sprintf("0.0.0.0:%s", cfg.UIServerPort)

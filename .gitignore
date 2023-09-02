@@ -1,6 +1,7 @@
 /src/blueprint.css
 /src/proto
 /build
+vendor/
 
 # Logs
 logs
@@ -59,3 +60,5 @@ yarn-error.log*
 
 # VSCode
 .vscode
+
+

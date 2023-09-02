@@ -19,6 +19,7 @@ func Init() (*Config, error) {
 
 	setupRelayAddr(cfg)
 	setupUIServerPort(cfg)
+	setupDex(cfg) // Call the setupDex function
 
 	if err := setupTLSOptions(cfg); err != nil {
 		return nil, err

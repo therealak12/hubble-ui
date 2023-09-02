@@ -25,6 +25,7 @@ import (
 	"github.com/cilium/hubble-ui/backend/pkg/logger"
 	"github.com/cilium/hubble-ui/backend/proto/ui"
 	"github.com/cilium/hubble-ui/backend/server"
+	"github.com/cilium/hubble-ui/backend/internal/server/middleware"
 )
 
 var (
@@ -33,7 +34,7 @@ var (
 
 func runServer(cfg *config.Config) {
 	// observerAddr := getObserverAddr()
-	srv := server.New(cfg)
+	srv := server.New(cfg, middleware.NewDex(cfg.DexConfig))
 
 	if err := srv.Run(); err != nil {
 		log.Errorf(msg.ServerSetupRunError, err)
@@ -56,11 +57,12 @@ func runServer(cfg *config.Config) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "ok")
 	})
-	handler.HandleFunc("/api/", func(resp http.ResponseWriter, req *http.Request) {
+	handler.HandleFunc("/api/", srv.AuthHandler.AuthMiddleware(func(resp http.ResponseWriter, req *http.Request) {
 		// NOTE: GRPC server handles requests with URL like "ui.UI/functionName"
+		log.Infoln(req.URL.Path)
 		req.URL.Path = req.URL.Path[len("/api/"):]
 		wrappedGrpc.ServeHTTP(resp, req)
-	})
+	}))
 	h2cHandler := h2c.NewHandler(handler, &http2.Server{})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGINT, unix.SIGTERM)
