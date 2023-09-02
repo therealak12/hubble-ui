@@ -100,7 +100,6 @@ func (srv *UIServer) Run() error {
 	}
 
 	srv.k8s = k8s
-	srv.AuthHandler.K8SClusterConfig = clusterConfig
 
 	return nil
 }

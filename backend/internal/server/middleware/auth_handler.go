@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/client-go/rest"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cilium/hubble-ui/backend/internal/config"
@@ -16,9 +14,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-
-	projectv1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -28,26 +23,21 @@ var (
 
 type (
 	DexAuthHandler struct {
-		cfg config.DexConfig
-		K8SClusterConfig *rest.Config
+		cfg config.Dex
 	}
 
 	user struct {
-		ID            string   `bson:"_id,omitempty" json:"_id"`
-		UserName      string   `bson:"username,omitempty" json:"username"`
-		Password      string   `bson:"password,omitempty" json:"password,omitempty"`
-		Email         string   `bson:"email,omitempty" json:"email,omitempty"`
-		Name          string   `bson:"name,omitempty" json:"name,omitempty"`
-		Groups        []string `bson:"groups,omitempty" json:"groups,omitempty"`
-		Namespaces    string   `bson:"namespaces,omitempty" json:"namespaces,omitempty"`
-		CreatedAt     *string  `bson:"created_at,omitempty" json:"created_at,omitempty"`
-		UpdatedAt     *string  `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
-		DeactivatedAt *string  `bson:"deactivated_at,omitempty" json:"deactivated_at,omitempty"`
-		Projects      string   `bson:"namespaces,omitempty" json:"namespaces,omitempty"`
+		ID            string  `bson:"_id,omitempty" json:"_id"`
+		UserName      string  `bson:"username,omitempty" json:"username"`
+		Email         string  `bson:"email,omitempty" json:"email,omitempty"`
+		Name          string  `bson:"name,omitempty" json:"name,omitempty"`
+		CreatedAt     *string `bson:"created_at,omitempty" json:"created_at,omitempty"`
+		UpdatedAt     *string `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+		DeactivatedAt *string `bson:"deactivated_at,omitempty" json:"deactivated_at,omitempty"`
 	}
 )
 
-func NewDex(cfg config.DexConfig) *DexAuthHandler {
+func NewDex(cfg config.Dex) *DexAuthHandler {
 	return &DexAuthHandler{cfg: cfg}
 }
 
@@ -122,7 +112,7 @@ func (h DexAuthHandler) oAuthDexConfig() (*oauth2.Config, *oidc.IDTokenVerifier,
 		RedirectURL:  h.cfg.HubbleURL + "/api/",
 		ClientID:     h.cfg.ClientID,
 		ClientSecret: h.cfg.Secret,
-		Scopes:       []string{"openid", "profile", "email", "groups"},
+		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint:     provider.Endpoint(),
 	}, provider.Verifier(&oidc.Config{ClientID: h.cfg.ClientID}), nil
 }
@@ -172,7 +162,6 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 		Name     string
 		Email    string   `json:"email"`
 		Verified bool     `json:"email_verified"`
-		Groups   []string `json:"groups"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		log.Error("OAuth Error: claims not found")
@@ -190,11 +179,11 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 	// 	return "", nil
 	// }
 
-	projects, err := h.getProjects(claims.Name)
-	if err != nil {
-		log.Errorf("Get Projects Error:%s", err)
-		return "", nil
-	}
+	// projects, err := h.getProjects(claims.Name)
+	// if err != nil {
+	// 	log.Errorf("Get Projects Error:%s", err)
+	// 	return "", nil
+	// }
 
 
 	createdAt := strconv.FormatInt(time.Now().Unix(), 10)
@@ -204,8 +193,6 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 		Name:       claims.Name,
 		Email:      claims.Email,
 		UserName:   claims.Email,
-		Groups:     claims.Groups,
-		Projects:  strings.Join(projects, ","),
 		CreatedAt:  &createdAt,
 	}
 
@@ -256,52 +243,3 @@ func (h DexAuthHandler) GetSignedJWT(user *user) (string, *time.Time, error) {
 
 	return tokenString, &exp, nil
 }
-func (h DexAuthHandler) getProjects(username string) ([]string, error) {
-	h.K8SClusterConfig.Impersonate.UserName = username
-	projectClientset, err := projectv1.NewForConfig(h.K8SClusterConfig)
-	if err != nil {
-		logrus.Error(err)
-		return nil, err
-	}
-
-	res, err := projectClientset.Projects().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	//projects := make(map[string]struct{})
-	projects := []string{}
-	for _, item := range res.Items {
-		projects = append(projects, item.ObjectMeta.Name)
-	}
-
-	return projects, err
-}
-
-func verifyNS(token, ns string) bool {
-	jwtToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-
-	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
-		projects := strings.Split(claims["projects"].(string), ",")
-		if contains(projects, ns) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
-}
-

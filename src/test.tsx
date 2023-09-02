@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 
 import { StoreProvider, useStore } from '~/store';
 import { RouteHistorySourceKind } from '~/store/stores/route';
-import { NotifierProvider, Notifier } from '~/notifier';
+import { Notifier, NotifierProvider } from '~/notifier';
 
 import { DataManagerProvider } from '~/data-manager';
 import { useHooksOnDataManager } from './data-manager/Provider';
