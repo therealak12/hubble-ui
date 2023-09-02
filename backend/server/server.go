@@ -66,14 +66,41 @@ func (srv *UIServer) newRetries() *cilium_backoff.Exponential {
 	}
 }
 
-func (srv *UIServer) Run() error {
-	k8s, err := createClientset()
+func getClusterConfig() (*rest.Config, error) {
+	clusterConfig, err := rest.InClusterConfig()
+	if err == nil {
+		return clusterConfig, nil
+	}
+
+	kubeconfig, err := kubeconfigLocation()
+	if err != nil {
+		return nil, err
+	}
+
+	clusterConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return clusterConfig, nil
+}
+
+func (srv *UIServer) Run() error {	
+	clusterConfig, err := getClusterConfig()
+	if err != nil {
+		log.Errorf(msg.ServerSetupK8sClientsetError, err)
+		os.Exit(1)
+	}
+
+	k8s, err := kubernetes.NewForConfig(clusterConfig)
+
 	if err != nil {
 		log.Errorf(msg.ServerSetupK8sClientsetError, err)
 		os.Exit(1)
 	}
 
 	srv.k8s = k8s
+	srv.AuthHandler.K8SClusterConfig = clusterConfig
 
 	return nil
 }
@@ -133,25 +160,6 @@ func (srv *UIServer) RetryIfGrpcUnavailable(
 
 func (srv *UIServer) IsGrpcUnavailable(err error) bool {
 	return status.Code(err) == codes.Unavailable
-}
-
-func createClientset() (kubernetes.Interface, error) {
-	config, err := rest.InClusterConfig()
-	if err == nil {
-		return kubernetes.NewForConfig(config)
-	}
-
-	kubeconfig, err := kubeconfigLocation()
-	if err != nil {
-		return nil, err
-	}
-
-	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return kubernetes.NewForConfig(config)
 }
 
 func kubeconfigLocation() (string, error) {

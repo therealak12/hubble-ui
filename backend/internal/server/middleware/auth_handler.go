@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"net/http"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +16,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+
+	projectv1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -27,7 +29,7 @@ var (
 type (
 	DexAuthHandler struct {
 		cfg config.DexConfig
-		K8S kubernetes.Interface
+		K8SClusterConfig *rest.Config
 	}
 
 	user struct {
@@ -41,6 +43,7 @@ type (
 		CreatedAt     *string  `bson:"created_at,omitempty" json:"created_at,omitempty"`
 		UpdatedAt     *string  `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 		DeactivatedAt *string  `bson:"deactivated_at,omitempty" json:"deactivated_at,omitempty"`
+		Projects      string   `bson:"namespaces,omitempty" json:"namespaces,omitempty"`
 	}
 )
 
@@ -165,6 +168,7 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 	}
 
 	var claims struct {
+		ID       string `json:"openid"`
 		Name     string
 		Email    string   `json:"email"`
 		Verified bool     `json:"email_verified"`
@@ -175,25 +179,33 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 		return "", nil
 	}
 
-	ocCmd := []string{"oc", "--as", claims.Name, "projects"}
-	cmd := exec.Command(ocCmd[0], ocCmd[1:]...)
-	var outbuf, errbuf strings.Builder
-	cmd.Stdout = &outbuf
-	cmd.Stderr = &errbuf
-	err = cmd.Run()
-	if err != nil || errbuf.String() != "" {
-		log.Infoln(err)
+	// ocCmd := []string{"oc", "--as", claims.Name, "projects"}
+	// cmd := exec.Command(ocCmd[0], ocCmd[1:]...)
+	// var outbuf, errbuf strings.Builder
+	// cmd.Stdout = &outbuf
+	// cmd.Stderr = &errbuf
+	// err = cmd.Run()
+	// if err != nil || errbuf.String() != "" {
+	// 	log.Infoln(err)
+	// 	return "", nil
+	// }
+
+	projects, err := h.getProjects(claims.Name)
+	if err != nil {
+		log.Errorf("Get Projects Error:%s", err)
 		return "", nil
 	}
+
 
 	createdAt := strconv.FormatInt(time.Now().Unix(), 10)
 
 	var userData = &user{
+		ID:        	claims.ID,
 		Name:       claims.Name,
 		Email:      claims.Email,
 		UserName:   claims.Email,
 		Groups:     claims.Groups,
-		Namespaces: outbuf.String(),
+		Projects:  strings.Join(projects, ","),
 		CreatedAt:  &createdAt,
 	}
 
@@ -229,9 +241,11 @@ func (h DexAuthHandler) GetSignedJWT(user *user) (string, *time.Time, error) {
 	token := jwt.New(jwt.SigningMethodHS512)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user.UserName
-	claims["nss"] = user.Namespaces
 
-	exp := time.Now().Add(h.cfg.JWTExpiration)
+	iat := time.Now()
+	exp := iat.Add(h.cfg.JWTExpiration)
+
+	claims["iat"] = iat.Unix()
 	claims["exp"] = exp.Unix()
 
 	tokenString, err := token.SignedString([]byte(h.cfg.Secret))
@@ -242,3 +256,52 @@ func (h DexAuthHandler) GetSignedJWT(user *user) (string, *time.Time, error) {
 
 	return tokenString, &exp, nil
 }
+func (h DexAuthHandler) getProjects(username string) ([]string, error) {
+	h.K8SClusterConfig.Impersonate.UserName = username
+	projectClientset, err := projectv1.NewForConfig(h.K8SClusterConfig)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	res, err := projectClientset.Projects().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	//projects := make(map[string]struct{})
+	projects := []string{}
+	for _, item := range res.Items {
+		projects = append(projects, item.ObjectMeta.Name)
+	}
+
+	return projects, err
+}
+
+func verifyNS(token, ns string) bool {
+	jwtToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+
+	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+		projects := strings.Split(claims["projects"].(string), ",")
+		if contains(projects, ns) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
