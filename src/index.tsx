@@ -40,7 +40,7 @@ const run = async () => {
     jwtPayload === null ||
     (jwtPayload.exp !== undefined && jwtPayload.exp < Date.now() / 1000)
   ) {
-    window.location.replace(`${window.location.origin}/api/`);
+    window.location.replace(auth);
     return;
   }
 

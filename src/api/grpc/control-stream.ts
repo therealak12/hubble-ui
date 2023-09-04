@@ -10,6 +10,7 @@ import {
 import { GRPCStream, GRPCStreamEvent, Options } from '~/api/grpc/stream';
 
 import * as helpers from '~/domain/helpers';
+import { Projects } from '~/utils/projects';
 
 type UnderlyingStream = ClientReadableStream<StreamResponse>;
 const StreamEventKind = StreamResponse.EventCase;
@@ -52,14 +53,19 @@ export class ControlStream
   }
 
   private emitNamespaces(nss?: StreamResponse.NamespaceStates) {
+    const projects = Projects.getInstance().getProjects();
+    if (projects === null) return;
+
     nss?.getNamespacesList().forEach(ns => {
       const nsDesc = ns.getNamespace();
       if (nsDesc == null) return;
 
+      if (projects != null && projects.includes(nsDesc.getName())) {
       this.emit('onNamespaceChange', {
         namespace: nsDesc.getName(),
         change: helpers.stateChangeFromPb(ns.getType()),
       });
+      }
     });
   }
 

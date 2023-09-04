@@ -160,8 +160,8 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 	var claims struct {
 		ID       string `json:"openid"`
 		Name     string
-		Email    string   `json:"email"`
-		Verified bool     `json:"email_verified"`
+		Email    string `json:"email"`
+		Verified bool   `json:"email_verified"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		log.Error("OAuth Error: claims not found")
@@ -189,11 +189,11 @@ func (h DexAuthHandler) dexCallBack(req *http.Request) (string, *time.Time) {
 	createdAt := strconv.FormatInt(time.Now().Unix(), 10)
 
 	var userData = &user{
-		ID:        	claims.ID,
-		Name:       claims.Name,
-		Email:      claims.Email,
-		UserName:   claims.Email,
-		CreatedAt:  &createdAt,
+		ID:        claims.ID,
+		Name:      claims.Name,
+		Email:     claims.Email,
+		UserName:  claims.Email,
+		CreatedAt: &createdAt,
 	}
 
 	jwtToken, exp, err := h.GetSignedJWT(userData)

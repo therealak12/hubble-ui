@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cilium/hubble-ui/backend/internal/server/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
@@ -37,11 +38,12 @@ type UIServer struct {
 	cfg             *config.Config
 	relayConnParams *grpc.ConnectParams
 
-	k8s       kubernetes.Interface
-	dataCache *cache.DataCache
+	k8s         kubernetes.Interface
+	dataCache   *cache.DataCache
+	AuthHandler *middleware.DexAuthHandler
 }
 
-func New(cfg *config.Config) *UIServer {
+func New(cfg *config.Config, dam *middleware.DexAuthHandler) *UIServer {
 	return &UIServer{
 		cfg: cfg,
 		relayConnParams: &grpc.ConnectParams{
@@ -53,7 +55,8 @@ func New(cfg *config.Config) *UIServer {
 			},
 			MinConnectTimeout: 5 * time.Second,
 		},
-		dataCache: cache.New(),
+		dataCache:   cache.New(),
+		AuthHandler: dam,
 	}
 }
 
@@ -64,25 +67,6 @@ func (srv *UIServer) newRetries() *cilium_backoff.Exponential {
 		Factor: 1.6,
 		Jitter: true,
 	}
-}
-
-func getClusterConfig() (*rest.Config, error) {
-	clusterConfig, err := rest.InClusterConfig()
-	if err == nil {
-		return clusterConfig, nil
-	}
-
-	kubeconfig, err := kubeconfigLocation()
-	if err != nil {
-		return nil, err
-	}
-
-	clusterConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return clusterConfig, nil
 }
 
 func (srv *UIServer) Run() error {	
@@ -104,7 +88,7 @@ func (srv *UIServer) Run() error {
 	return nil
 }
 
-func (srv *UIServer) GetHubbleClientFromContext(ctx context.Context) (
+func (srv *UIServer) GetHubbleClientFromContext(_ context.Context) (
 	*server.HubbleClient, error,
 ) {
 	relayAddr := srv.cfg.RelayAddr
@@ -159,6 +143,25 @@ func (srv *UIServer) RetryIfGrpcUnavailable(
 
 func (srv *UIServer) IsGrpcUnavailable(err error) bool {
 	return status.Code(err) == codes.Unavailable
+}
+
+func getClusterConfig() (*rest.Config, error) {
+	clusterConfig, err := rest.InClusterConfig()
+	if err == nil {
+		return clusterConfig, nil
+	}
+
+	kubeconfig, err := kubeconfigLocation()
+	if err != nil {
+		return nil, err
+	}
+
+	clusterConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return clusterConfig, nil
 }
 
 func kubeconfigLocation() (string, error) {

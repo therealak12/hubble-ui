@@ -20,6 +20,7 @@ import FeaturesStore from './features';
 
 import { StoreFrame, EventKind as FrameEvent } from '~/store/frame';
 import * as storage from '~/storage/local';
+import { Projects } from '~/utils/projects';
 
 configure({ enforceActions: 'observed' });
 
@@ -92,10 +93,13 @@ export class Store {
   }
 
   setNamespaces(nss: Array<string>) {
-    this.controls.namespaces = nss;
+    const projects = Projects.getInstance().getProjects();
+    if (projects === null) return;
 
-    if (!this.route.namespace && nss.length > 0) {
-      this.controls.setCurrentNamespace(nss[0]);
+    this.controls.namespaces = projects;
+
+    if (!this.route.namespace && projects.length > 0) {
+      this.controls.setCurrentNamespace(projects[0]);
     }
   }
 

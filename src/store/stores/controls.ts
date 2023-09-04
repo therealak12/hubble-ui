@@ -6,6 +6,7 @@ import { Verdict } from '~/domain/hubble';
 import { Filters, FilterEntry, FilterKind } from '~/domain/filtering';
 import { Status } from '~/domain/status';
 import { TransferState } from '~/domain/interactions';
+import { Projects } from '~/utils/projects';
 
 // This store maintains data that is configured by control interfaces
 export default class ControlStore {
@@ -59,7 +60,18 @@ export default class ControlStore {
   }
 
   public setCurrentNamespace(ns: string | null) {
+    if (ns === null) {
     this.currentNamespace = ns;
+    } else {
+      const projects = Projects.getInstance().getProjects();
+      if (projects === null) return;
+
+      if (projects.includes(ns)) {
+        this.currentNamespace = ns;
+      } else {
+        window.location.replace(window.location.origin);
+      }
+    }
   }
 
   public addNamespace(ns: string) {
