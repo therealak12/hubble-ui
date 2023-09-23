@@ -43,7 +43,9 @@
   font-size: 14px;
   line-height: 22px;
   color: $color;
-
+  height: 300px;
+  width: auto;
+  overflow-y: scroll;
   a {
     text-decoration: none;
     color: $color;
