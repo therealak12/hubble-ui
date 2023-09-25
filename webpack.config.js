@@ -148,6 +148,9 @@ module.exports = {
       allowAsyncCycles: false,
       cwd: process.cwd(),
     }),
+    new Dotenv({
+      path: `.env${isProduction ? '.production' : '.development'}`,
+    }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.BLUEPRINT_NAMESPACE': JSON.stringify('bp3'),
@@ -155,9 +158,6 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: 'bundle.[name].[contenthash].css',
       chunkFilename: '[id].chunk.bundle.[name].[contenthash].css',
-    }),
-    new Dotenv({
-      path: `.env${isProduction ? '.production' : '.development'}`,
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, `./server/public/index.html`),
