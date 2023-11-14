@@ -19,11 +19,22 @@ export class Projects {
     return this.projects;
   }
 
+  manipulateUrl(url: string): string {
+    const regex = /hubble/;
+    const match: boolean = regex.test(url);
+    if (match) {
+      return url.replace('hubble', 'hubble-middleware');
+    }
+    return url;
+  }
+
   async setProjects(token: string) {
     const headers = {
       Authorization: 'Bearer ' + token,
     };
-    const url = process.env.REACT_APP_HUBBLE_MIDDLEWARE_URL + '/projects' ?? '';
+
+    const baseUrl = this.manipulateUrl(window.location.origin);
+    const url = baseUrl + '/projects';
 
     try {
       const response = await fetch(url, { method: 'GET', headers: headers });
@@ -33,9 +44,11 @@ export class Projects {
 
       const data: User = await response.json();
       this.projects = data.projects;
-
     } catch (error: any) {
-      console.error('There was a problem with the fetch operation:', error.message);
+      console.error(
+        'There was a problem with the fetch operation:',
+        error.message,
+      );
     }
   }
 }

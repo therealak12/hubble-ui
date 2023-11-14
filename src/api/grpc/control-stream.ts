@@ -61,10 +61,10 @@ export class ControlStream
       if (nsDesc == null) return;
 
       if (projects != null && projects.includes(nsDesc.getName())) {
-      this.emit('onNamespaceChange', {
-        namespace: nsDesc.getName(),
-        change: helpers.stateChangeFromPb(ns.getType()),
-      });
+        this.emit('onNamespaceChange', {
+          namespace: nsDesc.getName(),
+          change: helpers.stateChangeFromPb(ns.getType()),
+        });
       }
     });
   }

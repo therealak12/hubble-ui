@@ -61,7 +61,7 @@ export default class ControlStore {
 
   public setCurrentNamespace(ns: string | null) {
     if (ns === null) {
-    this.currentNamespace = ns;
+      this.currentNamespace = ns;
     } else {
       const projects = Projects.getInstance().getProjects();
       if (projects === null) return;
