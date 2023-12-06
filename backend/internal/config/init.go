@@ -4,19 +4,28 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cilium/cilium/pkg/crypto/certloader"
+
 	"github.com/cilium/hubble-ui/backend/internal/msg"
 	"github.com/cilium/hubble-ui/backend/pkg/logger"
 )
 
 const (
 	UIServerDefaultPort = "8090"
+	/* #nosec G101 */
+	DefaultDexSecret     = "HUBBLE_CLIENT_SECRET"
+	DefaultDexClientID   = "hubble"
+	DefaultHubbleURL     = "https://hubble.apps.private.okd4.ts-1.staging-snappcloud.io"
+	DefaultDexAddr       = "https://argocd.okd4.ts-1.staging-snappcloud.io/api/dex"
+	DefaultDexExpiration = 2 * time.Hour
 )
 
 func Init() (*Config, error) {
 	cfg := &Config{}
 
+	setupDex(cfg)
 	setupRelayAddr(cfg)
 	setupUIServerPort(cfg)
 
@@ -25,6 +34,44 @@ func Init() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func setupDex(cfg *Config) {
+	cfg.Dex = Dex{
+		Addr:          DefaultDexAddr,
+		HubbleURL:     DefaultHubbleURL,
+		ClientID:      DefaultDexClientID,
+		Secret:        DefaultDexSecret,
+		JWTExpiration: DefaultDexExpiration,
+	}
+
+	dexAddr, ok := os.LookupEnv("DEX_API_ADDR")
+	if ok {
+		cfg.Dex.Addr = dexAddr
+	}
+
+	hubbleURL, ok := os.LookupEnv("HUBBLE_URL")
+	if ok {
+		cfg.Dex.HubbleURL = hubbleURL
+	}
+
+	dexClientID, ok := os.LookupEnv("DEX_CLIENT_ID")
+	if ok {
+		cfg.Dex.ClientID = dexClientID
+	}
+
+	dexSecret, ok := os.LookupEnv("DEX_SECRET")
+	if ok {
+		cfg.Dex.Secret = dexSecret
+	}
+
+	dexJWTExpiration, ok := os.LookupEnv("DEX_JWT_EXPIRATION")
+	if ok {
+		exp, err := time.ParseDuration(dexJWTExpiration)
+		if err == nil {
+			cfg.Dex.JWTExpiration = exp
+		}
+	}
 }
 
 func setupRelayAddr(cfg *Config) {

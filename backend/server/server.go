@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cilium/hubble-ui/backend/internal/server/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
@@ -37,11 +38,12 @@ type UIServer struct {
 	cfg             *config.Config
 	relayConnParams *grpc.ConnectParams
 
-	k8s       kubernetes.Interface
-	dataCache *cache.DataCache
+	k8s         kubernetes.Interface
+	dataCache   *cache.DataCache
+	AuthHandler *middleware.DexAuthHandler
 }
 
-func New(cfg *config.Config) *UIServer {
+func New(cfg *config.Config, dam *middleware.DexAuthHandler) *UIServer {
 	return &UIServer{
 		cfg: cfg,
 		relayConnParams: &grpc.ConnectParams{
@@ -53,7 +55,8 @@ func New(cfg *config.Config) *UIServer {
 			},
 			MinConnectTimeout: 5 * time.Second,
 		},
-		dataCache: cache.New(),
+		dataCache:   cache.New(),
+		AuthHandler: dam,
 	}
 }
 
@@ -67,7 +70,13 @@ func (srv *UIServer) newRetries() *cilium_backoff.Exponential {
 }
 
 func (srv *UIServer) Run() error {
-	k8s, err := createClientset()
+	clusterConfig, err := getClusterConfig()
+	if err != nil {
+		log.Errorf(msg.ServerSetupK8sClientsetError, err)
+		os.Exit(1)
+	}
+
+	k8s, err := kubernetes.NewForConfig(clusterConfig)
 	if err != nil {
 		log.Errorf(msg.ServerSetupK8sClientsetError, err)
 		os.Exit(1)
@@ -78,7 +87,7 @@ func (srv *UIServer) Run() error {
 	return nil
 }
 
-func (srv *UIServer) GetHubbleClientFromContext(ctx context.Context) (
+func (srv *UIServer) GetHubbleClientFromContext(_ context.Context) (
 	*server.HubbleClient, error,
 ) {
 	relayAddr := srv.cfg.RelayAddr
@@ -135,10 +144,10 @@ func (srv *UIServer) IsGrpcUnavailable(err error) bool {
 	return status.Code(err) == codes.Unavailable
 }
 
-func createClientset() (kubernetes.Interface, error) {
-	config, err := rest.InClusterConfig()
+func getClusterConfig() (*rest.Config, error) {
+	clusterConfig, err := rest.InClusterConfig()
 	if err == nil {
-		return kubernetes.NewForConfig(config)
+		return clusterConfig, nil
 	}
 
 	kubeconfig, err := kubeconfigLocation()
@@ -146,12 +155,12 @@ func createClientset() (kubernetes.Interface, error) {
 		return nil, err
 	}
 
-	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	clusterConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return kubernetes.NewForConfig(config)
+	return clusterConfig, nil
 }
 
 func kubeconfigLocation() (string, error) {

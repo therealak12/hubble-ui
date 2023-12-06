@@ -39,9 +39,9 @@ builder-info: ## Print information about the docker builder that will be used fo
 
 DOCKER_REGISTRY ?= quay.io
 
-# Set DOCKER_DEV_ACCOUNT with "cilium" by default
+# Set DOCKER_DEV_ACCOUNT with "public" by default
 ifeq ($(DOCKER_DEV_ACCOUNT),)
-    DOCKER_DEV_ACCOUNT=cilium
+    DOCKER_DEV_ACCOUNT=snapp
 endif
 
 # Set DOCKER_IMAGE_TAG with "latest" by default

@@ -12,6 +12,7 @@ import { ConnectionIndicator } from './ConnectionIndicator';
 import { DataMode, TransferState } from '~/domain/interactions';
 
 import css from './styles.scss';
+import Logout from '~/components/TopBar/Logout';
 
 export interface Props {
   transferState: TransferState;
@@ -79,9 +80,12 @@ export const TopBar = memo<Props>(function TopBar(props) {
       </div>
       <div className={css.right}>
         <div className={css.spacer} />
-        <div className={css.spacer} />
 
         <ConnectionIndicator transferState={props.transferState} />
+
+        <div className={css.spacer} />
+
+        <Logout />
       </div>
     </div>
   );

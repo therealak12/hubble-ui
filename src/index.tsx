@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 
 import { StoreProvider, useStore } from '~/store';
 import { RouteHistorySourceKind } from '~/store/stores/route';
-import { NotifierProvider, Notifier } from '~/notifier';
+import { Notifier, NotifierProvider } from '~/notifier';
 
 import { DataManagerProvider } from '~/data-manager';
 import { useHooksOnDataManager } from './data-manager/Provider';
@@ -18,6 +18,8 @@ import api from '~/api';
 
 import './blueprint.scss';
 import './index.scss';
+import { getAuthClaims, getAuthToken } from '~/utils/cookie';
+import { Projects } from '~/utils/projects';
 
 declare global {
   interface Window {
@@ -26,6 +28,24 @@ declare global {
 }
 
 const run = async () => {
+  const auth = `${window.location.origin}/api/`;
+  const token = getAuthToken();
+  if (token === null) {
+    window.location.replace(auth);
+    return;
+  }
+
+  const jwtPayload = getAuthClaims(token);
+  if (
+    jwtPayload === null ||
+    (jwtPayload.exp !== undefined && jwtPayload.exp < Date.now() / 1000)
+  ) {
+    window.location.replace(`${window.location.origin}/api/`);
+    return;
+  }
+
+  await Projects.getInstance().setProjects(token);
+
   ui.setCSSVars(ui.sizes);
 
   const Screen = observer(() => {
