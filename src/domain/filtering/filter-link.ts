@@ -14,14 +14,15 @@ export const filterLink = (link: Link, filters: Filters): boolean => {
 
   if (link.isDNSRequest && filters.skipKubeDns) return false;
 
-  let ok = !filters.filters?.length;
-  filters.filters?.forEach((ff: FilterEntry) => {
-    const passed = filterLinkByEntry(link, ff);
+  if (!filters.filters?.length) return true;
 
-    ok = ok || passed;
-  });
+  for (const ff of filters.filters) {
+    const ffResult = filterLinkByEntry(link, ff);
 
-  return ok;
+    if (ff.negative && !ffResult) return false;
+    if (!ff.negative && ffResult) return true;
+  }
+  return false;
 };
 
 export const filterLinkByEntry = (l: Link, e: FilterEntry): boolean => {
@@ -32,7 +33,8 @@ export const filterLinkByEntry = (l: Link, e: FilterEntry): boolean => {
     case FilterDirection.Both: {
       switch (e.kind) {
         case FilterKind.Identity: {
-          if (!sourceIdentityMatch && !destIdentityMatch) return false;
+          if (!sourceIdentityMatch && !destIdentityMatch)
+            return e.negative !== false;
           break;
         }
       }
@@ -41,7 +43,7 @@ export const filterLinkByEntry = (l: Link, e: FilterEntry): boolean => {
     case FilterDirection.To: {
       switch (e.kind) {
         case FilterKind.Identity: {
-          if (!destIdentityMatch) return false;
+          if (!destIdentityMatch) return e.negative !== false;
           break;
         }
       }
@@ -50,7 +52,7 @@ export const filterLinkByEntry = (l: Link, e: FilterEntry): boolean => {
     case FilterDirection.From: {
       switch (e.kind) {
         case FilterKind.Identity: {
-          if (!sourceIdentityMatch) return false;
+          if (!sourceIdentityMatch) return e.negative !== false;
           break;
         }
       }
@@ -58,5 +60,5 @@ export const filterLinkByEntry = (l: Link, e: FilterEntry): boolean => {
     }
   }
 
-  return true;
+  return !e.negative;
 };

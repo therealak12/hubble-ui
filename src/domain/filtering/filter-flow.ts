@@ -57,15 +57,15 @@ export const filterFlow = (flow: Flow, filters: Filters): boolean => {
     if (rangeSign === '+' && flow.httpStatus < httpStatus) return false;
     if (rangeSign === '-' && flow.httpStatus > httpStatus) return false;
   }
+  if (!filters.filters?.length) return true;
 
-  let ok = !filters.filters?.length;
-  filters.filters?.forEach((ff: FilterEntry) => {
-    const passed = filterFlowByEntry(flow, ff);
+  for (const ff of filters.filters) {
+    const ffResult = filterFlowByEntry(flow, ff);
 
-    ok = ok || passed;
-  });
-
-  return ok;
+    if (ff.negative && !ffResult) return false;
+    if (!ff.negative && ffResult) return true;
+  }
+  return false;
 };
 
 export const filterFlowByEntry = (flow: Flow, filter: FilterEntry): boolean => {
@@ -98,7 +98,9 @@ export const filterFlowByEntry = (flow: Flow, filter: FilterEntry): boolean => {
       break;
     }
     case FilterKind.TCPFlag: {
-      return flow.hasTCPFlag(filter.query.toLowerCase() as any);
+      return (
+        filter.negative !== flow.hasTCPFlag(filter.query.toLowerCase() as any)
+      );
     }
     case FilterKind.Pod: {
       if (filter.fromRequired) fromOk = flow.senderPodIs(filter.query);
@@ -108,5 +110,5 @@ export const filterFlowByEntry = (flow: Flow, filter: FilterEntry): boolean => {
     }
   }
 
-  return fromOk || toOk;
+  return filter.negative !== (fromOk || toOk);
 };

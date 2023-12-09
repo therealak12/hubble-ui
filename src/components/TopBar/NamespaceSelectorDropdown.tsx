@@ -1,5 +1,5 @@
-import React, { memo, useCallback } from 'react';
-import { ItemPredicate, ItemRenderer, Select } from '@blueprintjs/select';
+import React, { useCallback, memo } from 'react';
+import { ItemRenderer, ItemPredicate, Select } from '@blueprintjs/select';
 import { Button, MenuItem } from '@blueprintjs/core';
 
 import { usePopover } from '~/ui/hooks/usePopover';
@@ -49,7 +49,7 @@ export const NamespaceSelectorDropdown = memo<Props>(
 
     const btnIcon = (
       <img
-        src="/icons/misc/namespace-icon.svg"
+        src="icons/misc/namespace-icon.svg"
         className={css.namespacesDropdownButtonIcon}
       />
     );

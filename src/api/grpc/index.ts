@@ -3,8 +3,8 @@ import { GetControlStreamRequest } from '~backend/proto/ui/ui_pb';
 
 import { API, CoreAPIv1, EventParams } from '~/api/general';
 import {
-  EventParamsSet,
   EventStream as IEventStream,
+  EventParamsSet,
 } from '~/api/general/event-stream';
 import { ControlStream as IControlStream } from '~/api/general/control-stream';
 import { EventStream } from './event-stream';
@@ -23,10 +23,12 @@ export class APIv1 implements CoreAPIv1 {
     const host = process.env.API_HOST;
     const port = process.env.API_PORT;
     const path = process.env.API_PATH ?? '';
-    let addr = `${schema}://${host}:${port}${path}`;
 
+    let addr = `${schema}://${host}:${port}${path}`;
     if (process.env.NODE_ENV !== 'development') {
-      addr = `${document.location.origin}${path}`;
+      const origin = document.location.origin.replace(/(.*)\/$/, '$1');
+      const pathname = document.location.pathname.replace(/(.*)\/$/, '$1');
+      addr = `${origin}${pathname}${path}`;
     }
 
     this.client = new UIClient(addr);
