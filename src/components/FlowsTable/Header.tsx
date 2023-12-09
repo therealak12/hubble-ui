@@ -41,11 +41,6 @@ export const Header = memo<CommonProps>(function FlowsTableHeader(props) {
           {getColumnLabel(Column.Verdict)}
         </div>
       )}
-      {props.visibleColumns.has(Column.Auth) && (
-        <div className={classnames(css.cell, css.auth)}>
-          {getColumnLabel(Column.Auth)}
-        </div>
-      )}
       {props.visibleColumns.has(Column.TcpFlags) && (
         <div className={classnames(css.cell, css.tcpFlags)}>
           {getColumnLabel(Column.TcpFlags)}

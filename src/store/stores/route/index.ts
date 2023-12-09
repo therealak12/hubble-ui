@@ -1,6 +1,6 @@
 import { runInAction, makeAutoObservable } from 'mobx';
 import { createBrowserHistory, createMemoryHistory, History } from 'history';
-import qs from 'query-string';
+import * as qs from 'query-string';
 
 import { FilterEntry } from '~/domain/filtering';
 import { Verdict } from '~/domain/hubble';
@@ -150,7 +150,7 @@ export default class RouteStore {
       if (value == null || (hasLength && !(value as string).length)) {
         delete params[key];
       } else {
-        params[key] = String(value);
+        params[key] = String(value!);
       }
 
       return { parts, params, hash };

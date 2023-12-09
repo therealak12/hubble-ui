@@ -52,5 +52,4 @@ export const colors = {
   feetOuterStroke: '#EBEEF0',
   feetNeutralStroke: '#C1C8D0',
   feetRedStroke: '#FF5E5E',
-  padlockGreen: '#2F9316',
 };

@@ -119,16 +119,8 @@ export const Cell = memo<CellProps>(function FlowsTableCell(props) {
       const className = classnames(css.cell, css.verdict, {
         [css.forwardedVerdict]: props.flow.verdict === Verdict.Forwarded,
         [css.droppedVerdict]: props.flow.verdict === Verdict.Dropped,
-        [css.auditVerdict]: props.flow.verdict === Verdict.Audit,
       });
       return <div className={className}>{props.flow.verdictLabel}</div>;
-    }
-    case Column.Auth: {
-      return (
-        <div className={classnames(css.cell, css.auth)}>
-          {props.flow.authTypeLabel}
-        </div>
-      );
     }
     case Column.TcpFlags: {
       return (

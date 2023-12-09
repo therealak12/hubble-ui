@@ -7,7 +7,6 @@ const parse = (
   dir: FilterDirection,
   kind: FilterKind,
   query: string,
-  negative = false,
 ) => {
   test(testName, () => {
     const e = FilterEntry.parse(s);
@@ -18,7 +17,6 @@ const parse = (
     expect(e!.kind).toBe(kind);
     expect(e!.direction).toBe(dir);
     expect(e!.query).toBe(query);
-    expect(e!.negative).toBe(negative);
   });
 };
 
@@ -183,15 +181,5 @@ describe('correct strings parsing', () => {
     FilterDirection.Both,
     FilterKind.Pod,
     'random',
-  );
-
-  parse(
-    'correct 20',
-    '!pod=random',
-    true,
-    FilterDirection.Both,
-    FilterKind.Pod,
-    'random',
-    true,
   );
 });

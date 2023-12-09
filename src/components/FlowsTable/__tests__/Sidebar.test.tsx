@@ -117,30 +117,18 @@ runTest(5, data.flows.hubbleOne, {
   body: 'app=Receivernamespace=ReceiverNs',
 });
 
-// `Destination labels` Non-ICMP info renders
+// `Destination labels` info renders
 runTest(6, data.flows.hubbleOne, {
-  title: 'Destination port • protocol',
-  body: '80 • TCP',
-});
-
-// `Destination labels` ICMPv4 info renders
-runTest(7, data.flows.icmpv4Flow, {
-  title: 'Destination protocol',
-  body: 'ICMPv4',
-});
-
-// `Destination labels` ICMPv6 info renders
-runTest(8, data.flows.icmpv6Flow, {
-  title: 'Destination protocol',
-  body: 'ICMPv6',
+  title: 'Destination port',
+  body: '80',
 });
 
 // `Destination DNS` info doesn't render when unavailable
-runTest(9, data.flows.hubbleOne, {
+runTest(7, data.flows.hubbleOne, {
   title: 'Destination DNS',
 });
 
 // `Destination IP` info doesn't render when unavailable
-runTest(10, data.flows.hubbleOne, {
+runTest(8, data.flows.hubbleOne, {
   title: 'Destination IP',
 });

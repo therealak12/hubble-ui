@@ -17,16 +17,15 @@ export const filterServiceByEntry = (
   service: Service,
   e: FilterEntry,
 ): boolean => {
-  let pass = true;
-  if (e.isIdentity) pass = service.id === e.query;
+  if (e.isIdentity) return service.id === e.query;
 
   if (e.isLabel) {
-    pass = !!Labels.findKVByString(service.labels, e.query);
+    return !!Labels.findKVByString(service.labels, e.query);
   }
 
   if (e.isDNS) {
-    pass = service.dnsNames.includes(e.query) || service.id === e.query;
+    return service.dnsNames.includes(e.query) || service.id === e.query;
   }
 
-  return e.negative !== pass;
+  return true;
 };

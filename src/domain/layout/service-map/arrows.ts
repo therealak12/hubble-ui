@@ -116,8 +116,6 @@ export class ServiceMapArrowStrategy extends ArrowStrategy {
           arrow
             .addAccessPointArrow(connectorId, apId)
             .addVerdicts(link.verdicts)
-            .addAuthTypes(link.authTypes)
-            .setEncryption(link.isEncrypted)
             .addPoint(coords);
 
           if (areHttpEndpointsVisible) return;

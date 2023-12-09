@@ -11,7 +11,6 @@ export interface LabelsProps {
   isPrometheusApp: boolean;
   isKubeApiServer: boolean;
   appName?: string;
-  clusterName?: string;
 }
 
 export enum ReservedLabel {
@@ -101,17 +100,6 @@ export class Labels {
     return label ? label.key.replace('reserved:', '') : null;
   }
 
-  public static findClusterNameInLabels(labels: KV[]): string | null {
-    const label = labels.find(l => {
-      return (
-        l.key === 'k8s:io.cilium.k8s.policy.cluster' ||
-        l.key === 'io.cilium.k8s.policy.cluster'
-      );
-    });
-
-    return label?.value ?? null;
-  }
-
   public static findKVByString(labels: KV[], query: string): KV | null {
     for (const label of labels) {
       const { key, value } = label;
@@ -174,7 +162,6 @@ export class Labels {
       isPrometheusApp: false,
       isKubeApiServer: false,
       appName: undefined,
-      clusterName: undefined,
     };
 
     labels.forEach((kv: KV) => {
@@ -197,11 +184,6 @@ export class Labels {
     const appName = Labels.findAppNameInLabels(labels);
     if (appName != null) {
       props.appName = appName;
-    }
-
-    const clusterName = Labels.findClusterNameInLabels(labels);
-    if (clusterName != null) {
-      props.clusterName = clusterName;
     }
 
     return props;

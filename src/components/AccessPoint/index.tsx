@@ -17,7 +17,7 @@ export interface Props {
   onConnectorCoords?: (_: XY) => void;
 }
 
-export function AccessPointComponent(props: Props) {
+export const Component: FunctionComponent<Props> = props => {
   const imgContainer = useRef<HTMLDivElement>(null);
 
   const handle = useElemCoords(imgContainer, false, coords => {
@@ -28,35 +28,24 @@ export function AccessPointComponent(props: Props) {
     handle.emit();
   });
 
-  const showPort =
-    props.l4Protocol !== IPProtocol.ICMPv4 &&
-    props.l4Protocol !== IPProtocol.ICMPv6;
-
-  const showL7Protocol =
-    props.l7Protocol != null && props.l7Protocol !== L7Kind.Unknown;
-
   return (
     <div className={css.accessPoint}>
       <div className={css.icons}>
         <div className={css.circle} ref={imgContainer}>
-          <img src="icons/misc/access-point.svg" />
+          <img src="/icons/misc/access-point.svg" />
         </div>
 
         <div className={css.arrow}>
-          <img src="icons/misc/ap-arrow-violet.svg" />
+          <img src="/icons/misc/ap-arrow-violet.svg" />
         </div>
       </div>
 
       <div className={css.data}>
-        {showPort && (
-          <>
-            <div className={css.port}>{props.port}</div>
-            <div className={css.dot} />
-          </>
-        )}
+        <div className={css.port}>{props.port}</div>
+        <div className={css.dot} />
         <div className={css.protocol}>{IPProtocol[props.l4Protocol]}</div>
 
-        {props.l7Protocol && showL7Protocol && (
+        {props.l7Protocol != null && props.l7Protocol !== L7Kind.Unknown && (
           <>
             <div className={css.dot} />
             <div className={css.protocol}>
@@ -67,6 +56,6 @@ export function AccessPointComponent(props: Props) {
       </div>
     </div>
   );
-}
+};
 
-export const AccessPoint = React.memo(AccessPointComponent);
+export const AccessPoint = React.memo(Component);

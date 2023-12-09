@@ -209,7 +209,6 @@ export const App = observer((_props: AppProps) => {
         card={props.card}
         l7endpoints={l7endpoints.forReceiver(props.card.id)}
         maxHttpEndpointsVisible={5}
-        isClusterMeshed={store.currentFrame.services.isClusterMeshed}
         onHeightChange={onHeightChange}
         onClick={onCardSelect}
         onAccessPointCoords={onAccessPointCoords}
@@ -288,7 +287,7 @@ export const App = observer((_props: AppProps) => {
             text={
               flowsWaitTimeout
                 ? `No flows found for ${store.controls.currentNamespace} namespace. Will continue to monitor for new flows…`
-                : 'Waiting for flows to show on Service Map…'
+                : 'Waiting for flows to show on service map…'
             }
             spinnerIntent={flowsWaitTimeout ? 'none' : 'success'}
           />

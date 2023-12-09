@@ -1,25 +1,25 @@
-import { configure, reaction, autorun, toJS, makeAutoObservable } from 'mobx';
+import { autorun, configure, makeAutoObservable, reaction, toJS } from 'mobx';
 
 import { Flow } from '~/domain/flows';
-import { Filters, FilterEntry } from '~/domain/filtering';
+import { FilterEntry, Filters } from '~/domain/filtering';
 
 import { Service } from '~/domain/service-map';
-import { StateChange } from '~/domain/misc';
-import { setupDebugProp } from '~/domain/misc';
-import { HubbleService, HubbleLink, HubbleFlow } from '~/domain/hubble';
+import { setupDebugProp, StateChange } from '~/domain/misc';
+import { HubbleFlow, HubbleLink, HubbleService } from '~/domain/hubble';
 import { FeatureFlags } from '~/domain/features';
 
 import {
-  ServiceMapPlacementStrategy,
   ServiceMapArrowStrategy,
+  ServiceMapPlacementStrategy,
 } from '~/domain/layout/service-map';
 
 import RouteStore, { RouteHistorySourceKind } from './route';
 import ControlStore from './controls';
 import FeaturesStore from './features';
 
-import { StoreFrame, EventKind as FrameEvent } from '~/store/frame';
+import { EventKind as FrameEvent, StoreFrame } from '~/store/frame';
 import * as storage from '~/storage/local';
+import { Projects } from '~/utils/projects';
 
 configure({ enforceActions: 'observed' });
 
@@ -92,10 +92,13 @@ export class Store {
   }
 
   setNamespaces(nss: Array<string>) {
-    this.controls.namespaces = nss;
+    const projects = Projects.getInstance().getProjects();
+    if (projects === null) return;
 
-    if (!this.route.namespace && nss.length > 0) {
-      this.controls.setCurrentNamespace(nss[0]);
+    this.controls.namespaces = projects;
+
+    if (!this.route.namespace && projects.length > 0) {
+      this.controls.setCurrentNamespace(projects[0]);
     }
   }
 

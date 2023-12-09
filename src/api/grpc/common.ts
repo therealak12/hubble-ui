@@ -4,7 +4,6 @@ import * as helpers from '~/domain/helpers';
 import { CiliumEventTypes } from '~/domain/cilium';
 import { ReservedLabel, SpecialLabel } from '~/domain/labels';
 import { Filters, FilterEntry, FilterKind } from '~/domain/filtering';
-import { Verdict } from '~/domain/hubble';
 
 export type FlowFilters = [FlowFilter[], FlowFilter[]];
 
@@ -16,14 +15,11 @@ export const baseWhitelistFilter = (filters?: Filters): FlowFilter => {
     // Filter by http status code allows only l7 event type
     eventTypes.push(CiliumEventTypes.L7);
     wlFilter.addHttpStatusCode(filters.httpStatus);
-  } else if (filters?.verdict === Verdict.Audit) {
-    eventTypes.push(CiliumEventTypes.PolicyVerdict);
   } else {
     eventTypes.push(
       CiliumEventTypes.Drop,
       CiliumEventTypes.Trace,
       CiliumEventTypes.L7,
-      CiliumEventTypes.PolicyVerdict,
     );
   }
 
@@ -93,79 +89,12 @@ export const buildBlacklistFlowFilters = (filters?: Filters): FlowFilter[] => {
   blDstLocalDnsFilter.addDestinationFqdn('*.cluster.local*');
   blFilters.push(blSrcLocalDnsFilter, blDstLocalDnsFilter);
 
-  const blSrcIps: string[] = [];
-  const blDstIps: string[] = [];
-  const blSrcIdentities: number[] = [];
-  const blDstIdentities: number[] = [];
-  const blSrcPods: string[] = [];
-  const blDstPods: string[] = [];
-  filters?.filters
-    ?.filter(filter => filter.negative)
-    .forEach(filter => {
-      const { kind, query } = filter;
-      switch (kind) {
-        case FilterKind.Label: {
-          filter.fromRequired && blSrcLabelsFilter.addSourceLabel(query);
-          filter.toRequired && blDstLabelsFilter.addDestinationLabel(query);
-          break;
-        }
-        case FilterKind.Ip: {
-          filter.fromRequired && blSrcIps.push(filter.query);
-          filter.toRequired && blDstIps.push(filter.query);
-          break;
-        }
-        case FilterKind.Dns: {
-          filter.fromRequired && blSrcLocalDnsFilter.addSourceFqdn(query);
-          filter.toRequired && blDstLocalDnsFilter.addDestinationFqdn(query);
-          break;
-        }
-        case FilterKind.Identity: {
-          filter.fromRequired && blSrcIdentities.push(+query);
-          filter.toRequired && blDstIdentities.push(+query);
-          break;
-        }
-        case FilterKind.Pod: {
-          filter.fromRequired && blSrcPods.push(query);
-          filter.toRequired && blDstPods.push(query);
-        }
-      }
-    });
-
-  if (blSrcIps.length) {
-    const blSrcIpFilter: FlowFilter = new FlowFilter();
-    blSrcIps.forEach(e => blSrcIpFilter.addSourceIp(e));
-    blFilters.push(blSrcIpFilter);
-  }
-
-  if (blDstIps.length) {
-    const blDstIpFilter: FlowFilter = new FlowFilter();
-    blSrcIps.forEach(e => blDstIpFilter.addDestinationIp(e));
-    blFilters.push(blDstIpFilter);
-  }
-
-  if (blSrcIdentities.length) {
-    const blSrcIdentityFilter: FlowFilter = new FlowFilter();
-    blSrcIdentities.forEach(e => blSrcIdentityFilter.addSourceIdentity(e));
-    blFilters.push(blSrcIdentityFilter);
-  }
-
-  if (blDstIdentities.length) {
-    const blDstIdentityFilter: FlowFilter = new FlowFilter();
-    blDstIdentities.forEach(e => blDstIdentityFilter.addDestinationIdentity(e));
-    blFilters.push(blDstIdentityFilter);
-  }
-
-  if (blSrcPods.length) {
-    const blSrcPodFilter: FlowFilter = new FlowFilter();
-    blSrcPods.forEach(e => blSrcPodFilter.addSourcePod(e));
-    blFilters.push(blSrcPodFilter);
-  }
-
-  if (blDstPods.length) {
-    const blDstPodFilter: FlowFilter = new FlowFilter();
-    blDstPods.forEach(e => blDstPodFilter.addDestinationPod(e));
-    blFilters.push(blDstPodFilter);
-  }
+  // filter out icmp flows
+  const blICMPv4Filter = new FlowFilter();
+  const blICMPv6Filter = new FlowFilter();
+  blICMPv4Filter.addProtocol('ICMPv4');
+  blICMPv6Filter.addProtocol('ICMPv6');
+  blFilters.push(blICMPv4Filter, blICMPv6Filter);
 
   return blFilters;
 };
@@ -284,8 +213,7 @@ export const buildFlowFilters = (filters: Filters): FlowFilters => {
   const wlFilters: FlowFilter[] = [];
   const blFilters = buildBlacklistFlowFilters(filters);
 
-  const postiveEntries = filters.filters?.filter(filter => !filter.negative);
-  if (!postiveEntries?.length) {
+  if (!filters.filters?.length) {
     const namespace = filters?.namespace;
     if (namespace) {
       const wlSrcFilter = baseWhitelistFilter(filters);
@@ -299,7 +227,7 @@ export const buildFlowFilters = (filters: Filters): FlowFilters => {
     return [wlFilters, blFilters];
   }
 
-  postiveEntries.forEach(filter => {
+  filters.filters.forEach(filter => {
     wlFilters.push(...filterEntryWhitelistFilters(filters, filter));
   });
 

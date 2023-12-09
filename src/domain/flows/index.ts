@@ -11,7 +11,6 @@ import {
   Layer7,
   FlowType,
   L7FlowType,
-  AuthType,
 } from '~/domain/hubble';
 
 import {
@@ -24,7 +23,6 @@ import { memoize } from '~/utils/memoize';
 
 import * as tcpFlagsHelpers from '~/domain/helpers/tcp-flags';
 import * as verdictHelpers from '~/domain/helpers/verdict';
-import * as authtypeHelpers from '~/domain/helpers/auth-type';
 import * as timeHelpers from '~/domain/helpers/time';
 import * as protocolHelpers from '~/domain/helpers/protocol';
 import * as l7helpers from '~/domain/helpers/l7';
@@ -504,17 +502,5 @@ export class Flow {
 
   public get time() {
     return this.ref.time;
-  }
-
-  public get authType(): AuthType {
-    return this.ref.authType;
-  }
-
-  public get isEncrypted(): boolean {
-    return this.ref.ip?.encrypted ?? false;
-  }
-
-  public get authTypeLabel(): string {
-    return authtypeHelpers.toString(this.ref.authType);
   }
 }

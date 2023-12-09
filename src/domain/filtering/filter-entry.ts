@@ -20,7 +20,6 @@ export interface Params {
   kind: Kind;
   direction: Direction;
   query: string;
-  negative?: boolean;
   meta?: string;
 }
 
@@ -29,13 +28,9 @@ export class FilterEntry {
   public kind: Kind;
   public direction: Direction;
   public query: string;
-  public negative: boolean;
   public meta?: string;
 
   public static parseFull(userInput: string): FilterEntry | null {
-    const negative: boolean = userInput[0] === '!';
-    if (negative) userInput = userInput.substring(1);
-
     let [rawDirection] = userInput.split(':');
     rawDirection = rawDirection || '';
 
@@ -53,12 +48,10 @@ export class FilterEntry {
     const query = FilterEntry.parseQuery(kind, rawQuery);
     if (!query) return null;
 
-    return new FilterEntry({ kind, direction, query, negative });
+    return new FilterEntry({ kind, direction, query });
   }
 
   public static parse(userInput: string): FilterEntry | null {
-    const negative: boolean = userInput[0] === '!';
-    if (negative) userInput = userInput.substring(1);
     if (userInput.length === 0) return null;
 
     let kind: Kind = Kind.Label;
@@ -80,7 +73,7 @@ export class FilterEntry {
     parts = kindWithQuery.split('=');
     if (parts.length < 2) {
       query = FilterEntry.parseQuery(kind, parts[0] || '');
-      return new FilterEntry({ kind, direction, query, negative });
+      return new FilterEntry({ kind, direction, query });
     }
 
     const [rawKind, ...secondRest] = parts;
@@ -93,7 +86,7 @@ export class FilterEntry {
     }
 
     query = FilterEntry.parseQuery(kind, rest.join('='));
-    return new FilterEntry({ kind, direction, query, negative });
+    return new FilterEntry({ kind, direction, query });
   }
 
   public static parseDirection(s: string): Direction | null {
@@ -194,11 +187,10 @@ export class FilterEntry {
     });
   }
 
-  constructor({ kind, direction, query, negative, meta }: Params) {
+  constructor({ kind, direction, query, meta }: Params) {
     this.kind = kind;
     this.query = query;
     this.direction = direction;
-    this.negative = negative || false;
     this.meta = meta;
   }
 
@@ -233,9 +225,7 @@ export class FilterEntry {
   }
 
   public toString(): string {
-    return `${this.negative ? '!' : ''}${this.direction}:${this.kind}=${
-      this.query
-    }`;
+    return `${this.direction}:${this.kind}=${this.query}`;
   }
 
   public clone(): FilterEntry {
@@ -243,7 +233,6 @@ export class FilterEntry {
       kind: this.kind,
       direction: this.direction,
       query: this.query,
-      negative: this.negative,
       meta: this.meta,
     });
   }
@@ -252,8 +241,7 @@ export class FilterEntry {
     return (
       this.kind === rhs.kind &&
       this.direction === rhs.direction &&
-      this.query === rhs.query &&
-      this.negative == rhs.negative
+      this.query === rhs.query
     );
   }
 
@@ -303,10 +291,6 @@ export class FilterEntry {
 
   public get isBoth(): boolean {
     return this.bothRequired;
-  }
-
-  public get isNegative(): boolean {
-    return this.negative;
   }
 
   public get labelKeyValue(): [string, string] {

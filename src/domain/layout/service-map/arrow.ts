@@ -1,7 +1,7 @@
 import { action, computed, makeObservable, observable } from 'mobx';
 
 import { sizes } from '~/ui';
-import { AuthType, Verdict } from '~/domain/hubble';
+import { Verdict } from '~/domain/hubble';
 import { Arrow } from '~/domain/layout/abstract/arrows';
 import { Vec2, XY, XYWH, rounding, utils as gutils } from '~/domain/geometry';
 
@@ -12,8 +12,6 @@ export class AccessPointArrow extends Arrow {
   public accessPointId: string | null = null;
 
   public verdicts: Set<Verdict> = new Set();
-  public authTypes: Set<AuthType> = new Set();
-  public isEncrypted = false;
 
   public static new(): AccessPointArrow {
     return new AccessPointArrow();
@@ -45,22 +43,6 @@ export class AccessPointArrow extends Arrow {
     return this;
   }
 
-  @action
-  public addAuthTypes(authTypes: Set<AuthType>): this {
-    authTypes.forEach(at => {
-      this.authTypes.add(at);
-    });
-
-    return this;
-  }
-
-  @action
-  public setEncryption(encryption: boolean): this {
-    if (this.isEncrypted) return this;
-    this.isEncrypted = encryption;
-    return this;
-  }
-
   @computed
   public get id(): string {
     return `${this.connectorId ?? ''} -> ${this.accessPointId ?? ''}`;
@@ -71,11 +53,6 @@ export class AccessPointArrow extends Arrow {
     return (
       this.verdicts.has(Verdict.Dropped) || this.verdicts.has(Verdict.Error)
     );
-  }
-
-  @computed
-  public get hasAuth(): boolean {
-    return this.authTypes.has(AuthType.Spire);
   }
 }
 

@@ -3,7 +3,6 @@ export interface CommonProps {
 }
 
 export enum Column {
-  Auth = 'Authentication',
   SrcPod = 'Source Pod',
   SrcIp = 'Source IP',
   SrcService = 'Source Service',

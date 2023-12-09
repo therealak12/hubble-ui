@@ -20,7 +20,6 @@ export interface HubbleFlow {
   readonly destinationService?: Service;
   readonly summary: string;
   readonly trafficDirection: TrafficDirection;
-  readonly authType: AuthType;
 }
 
 export interface HubbleService {
@@ -42,8 +41,6 @@ export interface HubbleLink {
   destinationPort: number;
   ipProtocol: IPProtocol;
   verdict: Verdict;
-  authType: AuthType;
-  isEncrypted: boolean;
 }
 
 export enum IPProtocol {
@@ -188,7 +185,6 @@ export enum Verdict {
   Forwarded = 1,
   Dropped = 2,
   Error = 3,
-  Audit = 4,
 }
 
 export enum FlowType {
@@ -208,10 +204,4 @@ export enum TrafficDirection {
   Unknown = 0,
   Ingress = 1,
   Egress = 2,
-}
-
-export enum AuthType {
-  Disbaled = 0,
-  Spire = 1,
-  TestAlwaysFail = 2,
 }

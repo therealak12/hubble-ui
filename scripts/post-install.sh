@@ -14,13 +14,13 @@ function installation_check() {
 
 function install_protoc() {
 	if [ ! -d "$NODE_MODULES/.bin/protoc" ]; then
-		node ./scripts/install-grpc-deps/index.mjs protoc
+		node ./scripts/install-grpc-deps protoc
 	fi
 }
 
 function install_grpc_web_plugin() {
 	if [ ! -f "$NODE_MODULES/.bin/protoc-gen-grpc-web" ]; then
-		node ./scripts/install-grpc-deps/index.mjs web-plugin
+		node ./scripts/install-grpc-deps web-plugin
 	fi
 }
 

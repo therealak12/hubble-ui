@@ -138,7 +138,6 @@ export const VerdictEntry = memo<VerdictEntryProps>(
       [css.selected]: props.isSelected,
       [css.forwardedVerdict]: props.verdict === Verdict.Forwarded,
       [css.droppedVerdict]: props.verdict === Verdict.Dropped,
-      [css.auditVerdict]: props.verdict === Verdict.Audit,
     });
 
     const onClick = useCallback(() => {
@@ -159,24 +158,24 @@ export interface IPItemProps {
   onClick?: () => void;
 }
 
-export const IPEntry = memo<IPItemProps>(
-  function FlowsTableSidebarIPEntry(props) {
-    const onClick = useCallback(() => {
-      props.onClick?.();
-    }, [props.onClick]);
+export const IPEntry = memo<IPItemProps>(function FlowsTableSidebarIPEntry(
+  props,
+) {
+  const onClick = useCallback(() => {
+    props.onClick?.();
+  }, [props.onClick]);
 
-    const className = classnames(css.ip, {
-      [css.clickable]: !!props.onClick,
-      [css.selected]: props.isSelected,
-    });
+  const className = classnames(css.ip, {
+    [css.clickable]: !!props.onClick,
+    [css.selected]: props.isSelected,
+  });
 
-    return (
-      <span className={className} onClick={onClick}>
-        {props.ip}
-      </span>
-    );
-  },
-);
+  return (
+    <span className={className} onClick={onClick}>
+      {props.ip}
+    </span>
+  );
+});
 
 export interface DnsItemProps {
   dns: string;
@@ -234,21 +233,21 @@ export interface PodItemProps {
   onClick?: (_: PodSelector) => void;
 }
 
-export const PodEntry = memo<PodItemProps>(
-  function FlowsTableSidebarPodEntry(props) {
-    const onClick = useCallback(() => {
-      props.onClick?.(props.podSelector);
-    }, [props.podSelector, props.onClick]);
+export const PodEntry = memo<PodItemProps>(function FlowsTableSidebarPodEntry(
+  props,
+) {
+  const onClick = useCallback(() => {
+    props.onClick?.(props.podSelector);
+  }, [props.podSelector, props.onClick]);
 
-    const className = classnames(css.podd, {
-      [css.clickable]: !!props.onClick,
-      [css.selected]: props.isSelected,
-    });
+  const className = classnames(css.podd, {
+    [css.clickable]: !!props.onClick,
+    [css.selected]: props.isSelected,
+  });
 
-    return (
-      <span className={className} onClick={onClick}>
-        {props.podSelector.pod}
-      </span>
-    );
-  },
-);
+  return (
+    <span className={className} onClick={onClick}>
+      {props.podSelector.pod}
+    </span>
+  );
+});

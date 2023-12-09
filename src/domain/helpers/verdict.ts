@@ -8,8 +8,6 @@ export const verdictFromPb = (v: PBVerdict): Verdict => {
     verdict = Verdict.Forwarded;
   } else if (v === PBVerdict.DROPPED) {
     verdict = Verdict.Dropped;
-  } else if (v === PBVerdict.AUDIT) {
-    verdict = Verdict.Audit;
   }
 
   return verdict;
@@ -22,8 +20,6 @@ export const verdictToPb = (v: Verdict): PBVerdict => {
     verdict = PBVerdict.FORWARDED;
   } else if (v === Verdict.Dropped) {
     verdict = PBVerdict.DROPPED;
-  } else if (v === Verdict.Audit) {
-    verdict = PBVerdict.AUDIT;
   } else if (v === Verdict.Error) {
     verdict = PBVerdict.ERROR;
   }
@@ -37,7 +33,6 @@ export const verdictFromStr = (v: string): Verdict => {
 
   if (v.startsWith('forward')) return Verdict.Forwarded;
   if (v.startsWith('drop')) return Verdict.Dropped;
-  if (v.startsWith('audit')) return Verdict.Audit;
 
   return Verdict.Unknown;
 };
@@ -48,8 +43,6 @@ export const toString = (verdict: Verdict): string => {
       return 'forwarded';
     case Verdict.Dropped:
       return 'dropped';
-    case Verdict.Audit:
-      return 'audit';
     case Verdict.Unknown:
       return 'unknown';
   }
