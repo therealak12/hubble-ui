@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-const fs = require('fs-extra');
-const path = require('path');
-const fetch = require('node-fetch');
+import fs from 'fs-extra';
+import path from 'path';
+import fetch from 'node-fetch';
 
 const DL_PREFIX = 'https://github.com/grpc/grpc-web/releases/download';
 const EXT = process.platform === 'win32' ? '.exe' : '';
@@ -11,7 +10,7 @@ const getUrl = v => {
   return `${DL_PREFIX}/${v}/protoc-gen-grpc-web-${v}-${PLATFORM}-x86_64${EXT}`;
 };
 
-const run = async (targetDir, version) => {
+export default async (targetDir, version) => {
   const downloadUrl = getUrl(version);
   const filePath = path.resolve(targetDir, 'protoc-gen-grpc-web' + EXT);
 
@@ -33,5 +32,3 @@ const run = async (targetDir, version) => {
   await p;
   fs.chmodSync(filePath, '0755');
 };
-
-module.exports = run;

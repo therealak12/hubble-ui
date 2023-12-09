@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-const path = require('path');
-const fs = require('fs-extra');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs-extra';
 
-const installProtoc = require('./protoc');
-const installPlugin = require('./grpc-web-plugin');
+import installProtoc from './protoc.mjs';
+import installPlugin from './grpc-web-plugin.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const BIN_DIR = path.resolve(__dirname, '../../node_modules/.bin');
 
@@ -39,6 +42,7 @@ const run = async () => {
   }
 
   console.log('Done.');
+  process.exit(0);
 };
 
 run();
