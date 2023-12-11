@@ -75,6 +75,10 @@
   .image {
     max-width: 100%;
     max-height: calc(100% - 20px);
+
+    &:hover {
+      color: #e26d66;
+    }
   }
 
   &.clickable {
